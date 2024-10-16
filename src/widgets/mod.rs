@@ -6,6 +6,7 @@ pub mod pending;
 pub mod exit;
 pub mod jobs;
 pub mod sync;
+pub mod async_data;
 
 
 
