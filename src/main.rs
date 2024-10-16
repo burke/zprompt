@@ -2,7 +2,7 @@ use getopts::Options;
 
 // Near the top of the file, with the other `use` statements
 mod widgets;
-use widgets::{stash, path, prompt, ref_info, pending, exit, jobs, sync, async_data};
+use widgets::{stash, path, prompt, ref_info, pending, exit, jobs, sync, async_data, space_if_git};
 
 // Add this near the top with other use statements
 mod formatting;
@@ -59,14 +59,11 @@ pub fn main() {
 }
 
 fn print_all(context: &Context) {
-    let async_data = async_data::generate();
     let mut out = String::new();
     out.push_str(&path::generate());
-    if context.git_root().is_some() {
-        out.push_str(" ");
-    }
+    out.push_str(&space_if_git::generate(context));
     out.push_str(&stash::generate(context));
-    out.push_str(async_data.as_str());
+    out.push_str(&async_data::generate());
     out.push_str(&ref_info::generate(context));
     out.push_str(&pending::generate(context));
     out.push_str(&sync::generate(context));
