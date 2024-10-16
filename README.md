@@ -5,9 +5,10 @@ works for you. The weirdest and most excellent thing it does is dispatching `git
 status` as an async job and rerendering the prompt with a spinner until it
 completes, then resolving the indicator to magenta (dirty) or green (clean).
 
-**This lets you have git dirty/clean information in your prompt even in a huge
-repo without your prompt taking longer to generate (it takes 5ms for me in our
-largest repository).**
+> [!TIP]
+> This lets you have git dirty/clean information in your prompt even in a huge
+> repo without your prompt taking longer to generate (it takes 5ms for me in our
+> largest repository).
 
 The spinner assumes you're using a terminal with true color support because, come
 on, it's 2024, what the hell, Apple.
