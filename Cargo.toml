@@ -13,3 +13,4 @@ serde = { version = "1.0", features = ["derive"] }
 nix = "0.23"
 getopts = "0.2"
 rand = "0.8"
+regex = "1.5"

@@ -52,6 +52,7 @@ against having `%a` multiple times per prompt!
 
 * `%p` (path): last component of current working directory (with a grey
   background if there is an active shadowenv)
+* `%W` (world_path): Shopify monorepo pretty-printed path.
 * `%X` (space_if_git): a single space character, if currently in a git repo
 * `%s` (stash): a superscript character indictating the number of git stash
   entries, if any

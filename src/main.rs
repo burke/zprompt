@@ -1,6 +1,6 @@
 // Near the top of the file, with the other `use` statements
 mod widgets;
-use widgets::{stash, path, prompt, ref_info, pending, exit, jobs, sync, async_data, space_if_git};
+use widgets::{stash, path, prompt, ref_info, pending, exit, jobs, sync, async_data, space_if_git, world_path};
 
 // Add this near the top with other use statements
 mod formatting;
@@ -18,7 +18,7 @@ fn main() {
     let format_string = if args.len() > 1 {
         args[1].clone()
     } else {
-        "%p%X%s%a%r%n%y %e%P%j ".to_string()
+        "%W%X%s%a%r%n%y %e%P%j ".to_string()
     };
 
     print_formatted(&context, &format_string);
@@ -32,6 +32,7 @@ fn print_formatted(context: &Context, format: &str) {
         if in_control {
             match c {
                 'p' => output.push_str(&path::generate()),
+                'W' => output.push_str(&world_path::generate()),
                 'X' => output.push_str(&space_if_git::generate(context)),
                 's' => output.push_str(&stash::generate(context)),
                 'a' => output.push_str(&async_data::generate()),
