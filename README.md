@@ -46,7 +46,8 @@ way you like. You can probably call zprompt multiple times per prompt with
 different format strings if you want, but I would really strongly recommend
 against having `%a` multiple times per prompt!
 
-* `%p` (path): last component of current working directory
+* `%p` (path): last component of current working directory (with a grey
+  background if there is an active shadowenv)
 * `%X` (space_if_git): a single space character, if currently in a git repo
 * `%s` (stash): a superscript character indictating the number of git stash
   entries, if any
