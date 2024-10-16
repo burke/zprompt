@@ -14,21 +14,13 @@ use std::process::Command;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
-const ZERO_WIDTH_BEGIN: &str = "%{";
-const ZERO_WIDTH_END: &str = "%}";
-const SGR_RESET: &str = "\x1b[0m";
-const FG_RED: &str = "\x1b[31m";
-const FG_GREEN: &str = "\x1b[32m";
-const FG_YELLOW: &str = "\x1b[33m";
-const FG_BLUE: &str = "\x1b[34m";
-const FG_MAGENTA: &str = "\x1b[35m";
-const FG_WHITE: &str = "\x1b[37m";
+// Near the top of the file, with the other `use` statements
+mod widgets;
+use widgets::stash::gen_stash;
 
-const BG_SHADOWENV: &str = "\x1b[48;5;238m";
-
-fn zw(s: &str) -> String {
-    format!("{}{}{}", ZERO_WIDTH_BEGIN, s, ZERO_WIDTH_END)
-}
+// Add this near the top with other use statements
+mod formatting;
+use formatting::{zw, FG_BLUE, FG_GREEN, FG_MAGENTA, FG_RED, FG_YELLOW, BG_SHADOWENV, SGR_RESET};
 
 pub fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -251,7 +243,7 @@ fn print_all(git_root: &Option<std::path::PathBuf>) {
     if !git_root.is_none() {
         out.push_str(" ");
     }
-    out.push_str(&gen_stash(&git_root));
+    out.push_str(&gen_stash(git_root)); // Updated to pass git_root directly
     out.push_str(async_data.as_str());
     out.push_str(&gen_ref(&git_root));
     out.push_str(&gen_pending(&git_root));
@@ -332,29 +324,6 @@ fn git_root() -> Option<std::path::PathBuf> {
         cwd = cwd.parent().unwrap().to_path_buf();
     }
     None
-}
-
-const SUPERSCRIPT_CHARS: &'static str = "⁰¹²³⁴⁵⁶⁷⁸⁹";
-
-fn gen_stash(git_root: &Option<std::path::PathBuf>) -> String {
-    match git_root {
-        Some(git_root) => {
-            let stash_file = git_root.join(".git/logs/refs/stash");
-            // number of lines in file (or zero if it doesn't exist)
-            let num_lines = std::fs::read_to_string(&stash_file)
-                .unwrap_or_else(|_| "".to_string())
-                .lines()
-                .count();
-            // clamp num_lines to 9
-            let num_lines = if num_lines > 9 { 9 } else { num_lines };
-            let superchar = SUPERSCRIPT_CHARS.chars().nth(num_lines).unwrap();
-            match num_lines {
-                0 => "".to_string(),
-                _ => format!("{}{}{}", zw(FG_WHITE), superchar, zw(SGR_RESET)),
-            }
-        }
-        None => "".to_string(),
-    }
 }
 
 fn gen_ref(git_root: &Option<std::path::PathBuf>) -> String {
