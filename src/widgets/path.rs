@@ -4,7 +4,7 @@ use std::process::Command;
 
 use crate::formatting::{zw, FG_BLUE, FG_GREEN, BG_SHADOWENV, SGR_RESET};
 
-pub fn gen_path() -> String {
+pub fn generate() -> String {
     if env::var("USE_PWWD").is_ok() {
         return gen_path2();
     } else {

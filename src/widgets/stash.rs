@@ -1,7 +1,7 @@
 use crate::context::Context;
 use crate::formatting::{zw, FG_WHITE, SGR_RESET, SUPERSCRIPT_CHARS};
 
-pub fn gen_stash(context: &Context) -> String {
+pub fn generate(context: &Context) -> String {
     match context.git_root() {
         Some(git_root) => {
             let stash_file = git_root.join(".git/logs/refs/stash");
