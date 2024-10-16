@@ -10,6 +10,10 @@ completes, then resolving the indicator to magenta (dirty) or green (clean).
 > repo without your prompt taking longer to generate (it takes 5ms for me in our
 > largest repository).
 
+
+https://github.com/user-attachments/assets/210005f5-b8c8-44ac-8fe2-ff43dce1ebaa
+
+
 The spinner assumes you're using a terminal with true color support because, come
 on, it's 2024, what the hell, Apple.
 
