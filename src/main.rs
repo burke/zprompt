@@ -1,6 +1,6 @@
 // Near the top of the file, with the other `use` statements
 mod widgets;
-use widgets::{stash, path, prompt, ref_info, pending, exit, jobs, sync, async_data, space_if_git, world_path};
+use widgets::{stash, path, prompt, ref_info, pending, exit, jobs, sync, async_data, space_if_git, world_path, shadowenv};
 
 // Add this near the top with other use statements
 mod formatting;
@@ -18,7 +18,7 @@ fn main() {
     let format_string = if args.len() > 1 {
         args[1].clone()
     } else {
-        "%W%X%s%a%r%n%y %e%P%j ".to_string()
+        "%W%X%s%a%r%n%y%S%e%P%j ".to_string()
     };
 
     print_formatted(&context, &format_string);
@@ -42,6 +42,7 @@ fn print_formatted(context: &Context, format: &str) {
                 'e' => output.push_str(&exit::generate()),
                 'P' => output.push_str(&prompt::generate()),
                 'j' => output.push_str(&jobs::generate()),
+                'S' => output.push_str(&shadowenv::generate()),
                 '%' => output.push('%'), // Literal % when in control mode
                 _ => {
                     output.push('%');  // Print the % for unrecognized control
