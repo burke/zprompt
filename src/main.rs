@@ -4,25 +4,31 @@ use nix::sys::signal::{self, Signal};
 use nix::unistd::Pid;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
 // Near the top of the file, with the other `use` statements
 mod widgets;
-use widgets::stash::gen_stash;
+use widgets::{stash::gen_stash, path::gen_path};
 
 // Add this near the top with other use statements
 mod formatting;
-use formatting::{zw, FG_BLUE, FG_GREEN, FG_MAGENTA, FG_RED, FG_YELLOW, BG_SHADOWENV, SGR_RESET};
+use formatting::{zw, FG_GREEN, FG_MAGENTA, FG_RED, FG_YELLOW, SGR_RESET};
+
+// Add this function after the imports and before the main function
+
+// Add this near the top with other use statements
+mod context;
+use context::Context;
 
 pub fn main() {
+    let context = Context::new();
+
     let args: Vec<String> = std::env::args().collect();
     let mut opts = Options::new();
     opts.optflag("p", "", "print path info");
@@ -41,10 +47,8 @@ pub fn main() {
 
     let names = &["p", "s", "a", "r", "n", "y", "e", "P", "j"].map(|s| s.to_string());
 
-    let git_root = git_root();
-
     if !matches.opts_present(names) {
-        print_all(&git_root);
+        print_all(&context);
         return;
     }
 
@@ -53,11 +57,11 @@ pub fn main() {
         if matches.opt_present(name) {
             match name.as_ref() {
                 "p" => print!("{}", gen_path()),
-                "s" => print!("{}", gen_stash(&git_root)),
-                "a" => print!("{}", supervise_job(&git_root)),
-                "r" => print!("{}", gen_ref(&git_root)),
-                "n" => print!("{}", gen_pending(&git_root)),
-                "y" => print!("{}", gen_sync(&git_root)),
+                "s" => print!("{}", gen_stash(&context)),
+                "a" => print!("{}", supervise_job()),
+                "r" => print!("{}", gen_ref(&context)),
+                "n" => print!("{}", gen_pending(&context)),
+                "y" => print!("{}", gen_sync(&context)),
                 "e" => print!("{}", gen_exit()),
                 "P" => print!("{}", gen_prompt()),
                 "j" => print!("{}", gen_jobs()),
@@ -67,7 +71,7 @@ pub fn main() {
     }
 }
 
-fn supervise_job(_git_root: &Option<std::path::PathBuf>) -> String {
+fn supervise_job() -> String {
     let data = load_async_data();
     if data.is_none() {
         start_job(shell_pid().unwrap());
@@ -235,19 +239,18 @@ fn runtime_dir() -> std::path::PathBuf {
         .into()
 }
 
-fn print_all(git_root: &Option<std::path::PathBuf>) {
-    let async_data = supervise_job(&git_root);
-
+fn print_all(context: &Context) {
+    let async_data = supervise_job();
     let mut out = String::new();
     out.push_str(&gen_path());
-    if !git_root.is_none() {
+    if context.git_root().is_some() {
         out.push_str(" ");
     }
-    out.push_str(&gen_stash(git_root)); // Updated to pass git_root directly
+    out.push_str(&gen_stash(context));
     out.push_str(async_data.as_str());
-    out.push_str(&gen_ref(&git_root));
-    out.push_str(&gen_pending(&git_root));
-    out.push_str(&gen_sync(&git_root));
+    out.push_str(&gen_ref(context));
+    out.push_str(&gen_pending(context));
+    out.push_str(&gen_sync(context));
     out.push_str(" ");
     out.push_str(&gen_exit());
     out.push_str(&gen_prompt());
@@ -256,78 +259,8 @@ fn print_all(git_root: &Option<std::path::PathBuf>) {
     print!("{}", out);
 }
 
-fn gen_path2() -> String {
-    let mut cmd = Command::new("/Users/burke/world/trees/root/src/.meta/substrate/bin/pwwd");
-    cmd.arg("-cz");
-    let output = cmd.output().unwrap();
-
-    if output.status.success() {
-        String::from_utf8(output.stdout).unwrap()
-    } else {
-        panic!("wups")
-    }
-}
-
-fn gen_path() -> String {
-    if env::var("USE_PWWD").is_ok() {
-        return gen_path2();
-    } else {
-        // if SSH_CONNECTION is set, green; otherwise blue
-        let fg_color = if std::env::var("SSH_CONNECTION").is_ok() {
-            FG_GREEN
-        } else {
-            FG_BLUE
-        };
-        // if shadowenv_active, grey, otherwise blank
-        let color = if shadowenv_active() {
-            format!("{}{}", fg_color, BG_SHADOWENV)
-        } else {
-            fg_color.to_string()
-        };
-        let cwd = std::env::current_dir().unwrap();
-        let home = std::env::var("HOME").unwrap();
-        let world_path = std::path::Path::new(&home).join("world");
-
-        let basename = cwd.file_name().unwrap().to_str().unwrap();
-        let world_prefix = if cwd.starts_with(&world_path) {
-            format!("{}⊕", zw(FG_GREEN)).to_string()
-        } else {
-            "".to_string()
-        };
-
-        format!(
-            "{}{}{}{}",
-            world_prefix,
-            zw(color.as_ref()),
-            basename.to_string(),
-            zw(SGR_RESET)
-        )
-    }
-}
-
-fn shadowenv_active() -> bool {
-    // $__shadowenv_data is present and doesn't start with "0000"
-    let shadowenv_data = std::env::var("__shadowenv_data").unwrap_or("".to_string());
-    shadowenv_data.len() > 0 && !shadowenv_data.starts_with("0000")
-}
-
-// root directory of the git repo found by traversing up from the current working directory
-fn git_root() -> Option<std::path::PathBuf> {
-    let mut cwd = std::env::current_dir().unwrap();
-    for _ in 0.. {
-        if cwd.join(".git").exists() {
-            return Some(cwd);
-        }
-        if cwd.parent().is_none() {
-            return None;
-        }
-        cwd = cwd.parent().unwrap().to_path_buf();
-    }
-    None
-}
-
-fn gen_ref(git_root: &Option<std::path::PathBuf>) -> String {
-    let head = git_head(&git_root);
+fn gen_ref(context: &Context) -> String {
+    let head = git_head(&context);
     match head {
         Some(head) => {
             // if HEAD starts with "ref:", extract the ref name; otherwise, take the first 8 bytes
@@ -355,8 +288,8 @@ fn gen_ref(git_root: &Option<std::path::PathBuf>) -> String {
     }
 }
 
-fn git_head(git_root: &Option<PathBuf>) -> Option<String> {
-    git_root.as_ref().and_then(|root| {
+fn git_head(context: &Context) -> Option<String> {
+    context.git_root().as_ref().and_then(|root| {
         let git_path = root.join(".git");
 
         if git_path.is_file() {
@@ -383,8 +316,8 @@ fn read_head_file(head_file: &Path) -> Option<String> {
         .map(|content| content.trim_end().to_string())
 }
 
-fn gen_pending(git_root: &Option<std::path::PathBuf>) -> String {
-    match git_root {
+fn gen_pending(context: &Context) -> String {
+    match context.git_root() {
         Some(git_root) => {
             let mut pending = Vec::new();
             if git_root.join(".git/CHERRY_PICK_HEAD").exists() {
@@ -411,33 +344,36 @@ fn gen_pending(git_root: &Option<std::path::PathBuf>) -> String {
     }
 }
 
-fn gen_sync(git_root: &Option<std::path::PathBuf>) -> String {
-    match git_head(&git_root) {
+fn gen_sync(context: &Context) -> String {
+    match git_head(&context) {
         None => "".to_string(),
         Some(head) => {
-            let git_root = git_root.as_ref().unwrap();
-            if head.starts_with("ref: ") {
-                let head = head.trim_start_matches("ref: ");
-                // Remove a leading "refs/heads/"
-                let head = head.trim_start_matches("refs/heads/");
-                // read <git_root>/.git/refs/heads/<head>
-                let local_sha =
-                    std::fs::read_to_string(&git_root.join(".git/refs/heads/").join(head))
-                        .unwrap_or_else(|_| "".to_string())
-                        .trim_end()
-                        .to_string();
-                let remote_sha =
-                    std::fs::read_to_string(&git_root.join(".git/refs/remotes/origin/").join(head));
-                match remote_sha {
-                    Ok(remote_sha) => {
-                        let remote_sha = remote_sha.trim_end().to_string();
-                        if local_sha == remote_sha {
-                            "".to_string()
-                        } else {
-                            format!("{} ≠", zw(FG_RED))
+            if let Some(git_root) = context.git_root() {
+                if head.starts_with("ref: ") {
+                    let head = head.trim_start_matches("ref: ");
+                    // Remove a leading "refs/heads/"
+                    let head = head.trim_start_matches("refs/heads/");
+                    // read <git_root>/.git/refs/heads/<head>
+                    let local_sha =
+                        std::fs::read_to_string(&git_root.join(".git/refs/heads/").join(head))
+                            .unwrap_or_else(|_| "".to_string())
+                            .trim_end()
+                            .to_string();
+                    let remote_sha =
+                        std::fs::read_to_string(&git_root.join(".git/refs/remotes/origin/").join(head));
+                    match remote_sha {
+                        Ok(remote_sha) => {
+                            let remote_sha = remote_sha.trim_end().to_string();
+                            if local_sha == remote_sha {
+                                "".to_string()
+                            } else {
+                                format!("{} ≠", zw(FG_RED))
+                            }
                         }
+                        Err(_) => format!("{} ≟", zw(FG_YELLOW)),
                     }
-                    Err(_) => format!("{} ≟", zw(FG_YELLOW)),
+                } else {
+                    "".to_string()
                 }
             } else {
                 "".to_string()

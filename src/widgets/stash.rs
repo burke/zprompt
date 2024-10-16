@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use crate::context::Context;
 use crate::formatting::{zw, FG_WHITE, SGR_RESET, SUPERSCRIPT_CHARS};
 
-pub fn gen_stash(git_root: &Option<PathBuf>) -> String {
-    match git_root {
+pub fn gen_stash(context: &Context) -> String {
+    match context.git_root() {
         Some(git_root) => {
             let stash_file = git_root.join(".git/logs/refs/stash");
             let num_lines = std::fs::read_to_string(&stash_file)
