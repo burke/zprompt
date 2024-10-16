@@ -45,7 +45,7 @@ TRAPALRM() {
 ## Configuration
 
 `zprompt` has a handful of widgets. The default configuration (`zprompt
-"%p%X%s%a%r%n%y %e%P%j "`) is what I use, but you can assemble them in whichever
+"%W%X%s%a%r%n%y %e%P%j "`) is what I use, but you can assemble them in whichever
 way you like. You can probably call zprompt multiple times per prompt with
 different format strings if you want, but I would really strongly recommend
 against having `%a` multiple times per prompt!
