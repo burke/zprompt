@@ -9,19 +9,24 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::formatting::{zw, FG_GREEN, FG_MAGENTA};
 
 pub fn generate() -> String {
-    let data = load_async_data();
-    if data.is_none() {
-        start_job(shell_pid().unwrap());
-    }
-    let data = load_async_data();
-    let dc = match data {
-        Some(data) => match data.content {
-            Some(content) => content,
-            None => tickdata(),
+    match shell_pid() {
+        Some(shell_pid) => {
+            let data = load_async_data();
+            if data.is_none() {
+                start_job(shell_pid);
+            }
+            let data = load_async_data();
+            let dc = match data {
+                Some(data) => match data.content {
+                    Some(content) => content,
+                    None => tickdata(),
+                },
+                None => tickdata(),
+            };
+            zw(dc.as_ref())
         },
-        None => tickdata(),
-    };
-    zw(dc.as_ref())
+        None => "".to_string() // Return an empty string if there's no shell PID
+    }
 }
 
 fn start_job(shell_pid: i32) {
@@ -126,17 +131,15 @@ struct AsyncData {
 }
 
 fn shell_pid() -> Option<i32> {
-    match std::env::var("SHELL_PID") {
-        Ok(pid) => Some(pid.parse::<i32>().unwrap()),
-        Err(_) => None,
-    }
+    std::env::var("SHELL_PID")
+        .ok()
+        .and_then(|pid| pid.parse::<i32>().ok())
 }
 
 fn exec_no() -> Option<u32> {
-    match std::env::var("PS1_EXEC_NO") {
-        Ok(pid) => Some(pid.parse::<u32>().unwrap()),
-        Err(_) => None,
-    }
+    std::env::var("PS1_EXEC_NO")
+        .ok()
+        .and_then(|no| no.parse::<u32>().ok())
 }
 
 fn load_async_data() -> Option<AsyncData> {
