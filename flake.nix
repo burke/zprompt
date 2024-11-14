@@ -2,7 +2,7 @@
   description = "zprompt - A Rust binary";
 
   inputs = {
-    nixpkgs.url = "github:NixPkgs/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -27,9 +27,6 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
-            outputHashes = {
-              # If you have git dependencies, add their output hashes here
-            };
           };
 
           nativeBuildInputs = [ rustToolchain ];
