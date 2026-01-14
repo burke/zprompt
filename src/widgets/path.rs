@@ -1,4 +1,3 @@
-use std::env;
 use std::path::Path;
 use crate::formatting::{zw, FG_BLUE, FG_GREEN, SGR_RESET};
 

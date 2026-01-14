@@ -1,6 +1,6 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::cell::RefCell;
-use std::fs;
+use std::process::Command;
 
 pub struct Context {
     git_root: RefCell<Option<Option<PathBuf>>>,
@@ -47,27 +47,17 @@ impl Context {
 
     fn find_git_head(&self) -> Option<String> {
         self.git_root().as_ref().and_then(|root| {
-            let git_path = root.join(".git");
+            let output = Command::new("git")
+                .args(["rev-parse", "--abbrev-ref", "HEAD"])
+                .current_dir(root)
+                .output()
+                .ok()?;
 
-            if git_path.is_file() {
-                fs::read_to_string(&git_path).ok().and_then(|content| {
-                    let gitdir = content.strip_prefix("gitdir: ")?.trim_end();
-                    let actual_git_dir = if Path::new(gitdir).is_absolute() {
-                        PathBuf::from(gitdir)
-                    } else {
-                        root.join(gitdir)
-                    };
-                    Self::read_head_file(&actual_git_dir.join("HEAD"))
-                })
+            if output.status.success() {
+                Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
             } else {
-                Self::read_head_file(&git_path.join("HEAD"))
+                None
             }
         })
-    }
-
-    fn read_head_file(head_file: &Path) -> Option<String> {
-        fs::read_to_string(head_file)
-            .ok()
-            .map(|content| content.trim_end().to_string())
     }
 }

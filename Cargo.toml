@@ -5,6 +5,10 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[[bin]]
+name = "zprompt"
+path = "src/main.rs"
+
 [dependencies]
 fork = "0.1"
 libc = "0.2"

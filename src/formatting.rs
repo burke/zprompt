@@ -9,11 +9,6 @@ pub const FG_MAGENTA: &str = "\x1b[35m";
 pub const FG_WHITE: &str = "\x1b[37m";
 pub const FG_GRAY: &str = "\x1b[38;5;240m";
 
-pub const BG_SHADOWENV: &str = "\x1b[48;5;238m";
-
-pub const FG_BOLD_BLUE: &str = "\x1b[1;34m";
-pub const BOLD_OFF: &str = "\x1b[22m";
-
 pub const SUPERSCRIPT_CHARS: &str = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 
 pub fn zw(s: &str) -> String {
