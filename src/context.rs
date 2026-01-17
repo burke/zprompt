@@ -5,13 +5,15 @@ use std::process::Command;
 pub struct Context {
     git_root: RefCell<Option<Option<PathBuf>>>,
     git_head: RefCell<Option<Option<String>>>,
+    pub no_worldpath: bool,
 }
 
 impl Context {
-    pub fn new() -> Self {
+    pub fn new(no_worldpath: bool) -> Self {
         Context {
             git_root: RefCell::new(None),
             git_head: RefCell::new(None),
+            no_worldpath,
         }
     }
 

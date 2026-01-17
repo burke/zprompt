@@ -12,14 +12,16 @@ mod context;
 use context::Context;
 
 fn main() {
-    let context = Context::new();
     let args: Vec<String> = std::env::args().collect();
 
-    let format_string = if args.len() > 1 {
-        args[1].clone()
-    } else {
-        "%W%X%s%a%r%n%y%S%e%P%j ".to_string()
-    };
+    let no_worldpath = args.iter().any(|a| a == "--no-worldpath");
+    let context = Context::new(no_worldpath);
+
+    let format_string = args.iter()
+        .skip(1)
+        .find(|a| !a.starts_with("--"))
+        .cloned()
+        .unwrap_or_else(|| "%W%X%s%a%r%n%y%S%e%P%j ".to_string());
 
     print_formatted(&context, &format_string);
 }
@@ -32,7 +34,7 @@ fn print_formatted(context: &Context, format: &str) {
         if in_control {
             match c {
                 'p' => output.push_str(&path::generate()),
-                'W' => output.push_str(&world_path::generate()),
+                'W' => output.push_str(&world_path::generate(context)),
                 'X' => output.push_str(&space_if_git::generate(context)),
                 's' => output.push_str(&stash::generate(context)),
                 'a' => output.push_str(&async_data::generate()),
